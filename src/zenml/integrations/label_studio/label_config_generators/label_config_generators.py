@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 TASK_TO_FILENAME_REFERENCE_MAPPING = {
     AnnotationTasks.IMAGE_CLASSIFICATION.value: "image",
     AnnotationTasks.OBJECT_DETECTION_BOUNDING_BOXES.value: "image",
+    AnnotationTasks.SEMANTIC_SEGMENTATION_POLYGONS.value: "image",
 }
 
 
@@ -101,6 +102,46 @@ def generate_basic_object_detection_bounding_boxes_label_config(
         f"<Label value='{label}' />\n" for label in labels
     )
     label_config_end = "</RectangleLabels>\n</View>"
+    label_config = label_config_start + label_config_choices + label_config_end
+
+    return (
+        label_config,
+        label_config_type,
+    )
+
+
+def generate_semantic_segmentation_polygons_label_config(
+    labels: List[str],
+) -> Tuple[str, str]:
+    """Generates a Label Studio config for semantic segmentation with polygons.
+
+    This is based on the basic config example shown at
+    https://labelstud.io/templates/image_polygons.html.
+
+    Args:
+        labels: A list of labels to be used in the label config.
+
+    Returns:
+        A tuple of the generated label config and the label config type.
+
+    Raises:
+        ValueError: If no labels are provided.
+    """
+    if not labels:
+        raise ValueError("No labels provided")
+
+    label_config_type = AnnotationTasks.SEMANTIC_SEGMENTATION_POLYGONS
+
+    label_config_start = """<View>
+    <Image name="image" value="$image" zoom="true"/>
+    <PolygonLabels name="label" toName="image"
+                    strokeWidth="3" pointSize="small"
+                    opacity="0.9">
+    """
+    label_config_choices = "".join(
+        f"<Label value='{label}' />\n" for label in labels
+    )
+    label_config_end = "</PolygonLabels>\n</View>"
     label_config = label_config_start + label_config_choices + label_config_end
 
     return (
