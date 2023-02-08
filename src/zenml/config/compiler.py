@@ -70,7 +70,10 @@ class Compiler:
         if run_configuration.run_name:
             self._verify_run_name(run_configuration.run_name)
 
-        pipeline.connect(**pipeline.steps)
+        from zenml.pipelines.new.pipeline_template import PipelineTemplate
+
+        if isinstance(pipeline, PipelineTemplate):
+            pipeline.connect(**pipeline.steps)
 
         pipeline_settings = self._filter_and_validate_settings(
             settings=pipeline.configuration.settings,

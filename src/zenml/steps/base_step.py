@@ -100,9 +100,9 @@ class BaseStepMeta(type):
     """
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-        from zenml.pipelines import BasePipeline
+        from zenml.pipelines.new import Pipeline
 
-        if BasePipeline._ACTIVE_PIPELINE:
+        if Pipeline._ACTIVE_PIPELINE:
             init_args = [
                 arg
                 for arg in args
@@ -115,15 +115,15 @@ class BaseStepMeta(type):
             }
             instance = super().__call__(*init_args, **init_kwargs)
 
-            if instance.name in BasePipeline._ACTIVE_PIPELINE.steps:
+            if instance.name in Pipeline._ACTIVE_PIPELINE.steps:
                 for idx in range(2, 1000):
                     name = f"{instance.name}_{idx}"
-                    if name not in BasePipeline._ACTIVE_PIPELINE.steps:
+                    if name not in Pipeline._ACTIVE_PIPELINE.steps:
                         break
             else:
                 name = instance.name
 
-            BasePipeline._ACTIVE_PIPELINE.steps[name] = instance
+            Pipeline._ACTIVE_PIPELINE.steps[name] = instance
 
             call_args = [
                 arg

@@ -25,14 +25,14 @@ from typing import (
     overload,
 )
 
-from zenml.pipelines.base_pipeline import (
+from zenml.pipelines.new.pipeline_template import (
     INSTANCE_CONFIGURATION,
     PARAM_ENABLE_ARTIFACT_METADATA,
     PARAM_ENABLE_CACHE,
     PARAM_EXTRA_OPTIONS,
     PARAM_SETTINGS,
     PIPELINE_INNER_FUNC_NAME,
-    BasePipeline,
+    PipelineTemplate,
 )
 
 if TYPE_CHECKING:
@@ -42,23 +42,23 @@ F = TypeVar("F", bound=Callable[..., None])
 
 
 @overload
-def pipeline(_func: F) -> Type[BasePipeline]:
+def pipeline_template(_func: F) -> Type[PipelineTemplate]:
     ...
 
 
 @overload
-def pipeline(
+def pipeline_template(
     *,
     name: Optional[str] = None,
     enable_cache: Optional[bool] = None,
     enable_artifact_metadata: Optional[bool] = None,
     settings: Optional[Dict[str, "SettingsOrDict"]] = None,
     extra: Optional[Dict[str, Any]] = None,
-) -> Callable[[F], Type[BasePipeline]]:
+) -> Callable[[F], Type[PipelineTemplate]]:
     ...
 
 
-def pipeline(
+def pipeline_template(
     _func: Optional[F] = None,
     *,
     name: Optional[str] = None,
@@ -66,7 +66,7 @@ def pipeline(
     enable_artifact_metadata: Optional[bool] = None,
     settings: Optional[Dict[str, "SettingsOrDict"]] = None,
     extra: Optional[Dict[str, Any]] = None,
-) -> Union[Type[BasePipeline], Callable[[F], Type[BasePipeline]]]:
+) -> Union[Type[PipelineTemplate], Callable[[F], Type[PipelineTemplate]]]:
     """Outer decorator function for the creation of a ZenML pipeline.
 
     In order to be able to work with parameters such as "name", it features a
@@ -86,7 +86,7 @@ def pipeline(
         ZenML BasePipeline
     """
 
-    def inner_decorator(func: F) -> Type[BasePipeline]:
+    def inner_decorator(func: F) -> Type[PipelineTemplate]:
         """Inner decorator function for the creation of a ZenML pipeline.
 
         Args:
@@ -98,7 +98,7 @@ def pipeline(
         """
         return type(  # noqa
             name if name else func.__name__,
-            (BasePipeline,),
+            (PipelineTemplate,),
             {
                 PIPELINE_INNER_FUNC_NAME: staticmethod(func),  # type: ignore[arg-type] # noqa
                 INSTANCE_CONFIGURATION: {
