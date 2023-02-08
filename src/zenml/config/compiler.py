@@ -66,7 +66,7 @@ class Compiler:
             pipeline=pipeline, config=run_configuration
         )
         self._apply_stack_default_settings(pipeline=pipeline, stack=stack)
-        self._verify_distinct_step_names(pipeline=pipeline)
+        # self._verify_distinct_step_names(pipeline=pipeline)
         if run_configuration.run_name:
             self._verify_run_name(run_configuration.run_name)
 
@@ -87,6 +87,7 @@ class Compiler:
 
         steps = {
             name: self._compile_step(
+                name=name,
                 step=step,
                 pipeline_settings=settings_to_passdown,
                 pipeline_extra=pipeline.configuration.extra,
@@ -309,6 +310,7 @@ class Compiler:
 
     def _compile_step(
         self,
+        name: str,
         step: "BaseStep",
         pipeline_settings: Dict[str, "BaseSettings"],
         pipeline_extra: Dict[str, Any],
@@ -338,9 +340,9 @@ class Compiler:
             settings=pipeline_settings, extra=pipeline_extra, merge=False
         )
         step.configure(settings=step_settings, extra=step_extra, merge=True)
-
+        step.configure(name=name)
         complete_step_configuration = StepConfiguration(
-            **step.configuration.dict()
+            **step.configuration.dict(),
         )
 
         return Step(spec=step_spec, config=complete_step_configuration)
@@ -377,29 +379,30 @@ class Compiler:
 
         # Sort step names using topological sort
         dag: Dict[str, List[str]] = {
-            step.name: list(step.upstream_steps) for step in steps.values()
+            step_name: list(step.upstream_steps)
+            for step_name, step in steps.items()
         }
         reversed_dag: Dict[str, List[str]] = reverse_dag(dag)
         layers = topsorted_layers(
-            nodes=[step.name for step in steps.values()],
+            nodes=list(dag),
             get_node_id_fn=lambda node: node,
             get_parent_nodes=lambda node: dag[node],
             get_child_nodes=lambda node: reversed_dag[node],
         )
         sorted_step_names = [step for layer in layers for step in layer]
 
-        # Construct pipeline name to step mapping
-        step_name_to_name_in_pipeline: Dict[str, str] = {
-            step.name: name_in_pipeline
-            for name_in_pipeline, step in steps.items()
-        }
-        sorted_names_in_pipeline: List[str] = [
-            step_name_to_name_in_pipeline[step_name]
-            for step_name in sorted_step_names
-        ]
+        # # Construct pipeline name to step mapping
+        # step_name_to_name_in_pipeline: Dict[str, str] = {
+        #     step.name: name_in_pipeline
+        #     for name_in_pipeline, step in steps.items()
+        # }
+        # sorted_names_in_pipeline: List[str] = [
+        #     step_name_to_name_in_pipeline[step_name]
+        #     for step_name in sorted_step_names
+        # ]
         sorted_steps: List[Tuple[str, "BaseStep"]] = [
             (name_in_pipeline, steps[name_in_pipeline])
-            for name_in_pipeline in sorted_names_in_pipeline
+            for name_in_pipeline in sorted_step_names
         ]
         return sorted_steps
 

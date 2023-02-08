@@ -99,6 +99,46 @@ class BaseStepMeta(type):
     * Is typed correctly.
     """
 
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        from zenml.pipelines import BasePipeline
+
+        if BasePipeline._ACTIVE_PIPELINE:
+            init_args = [
+                arg
+                for arg in args
+                if not isinstance(arg, BaseStep._OutputArtifact)
+            ]
+            init_kwargs = {
+                key: arg
+                for key, arg in kwds
+                if not isinstance(arg, BaseStep._OutputArtifact)
+            }
+            instance = super().__call__(*init_args, **init_kwargs)
+
+            if instance.name in BasePipeline._ACTIVE_PIPELINE.steps:
+                for idx in range(2, 1000):
+                    name = f"{instance.name}_{idx}"
+                    if name not in BasePipeline._ACTIVE_PIPELINE.steps:
+                        break
+            else:
+                name = instance.name
+
+            BasePipeline._ACTIVE_PIPELINE.steps[name] = instance
+
+            call_args = [
+                arg
+                for arg in args
+                if isinstance(arg, BaseStep._OutputArtifact)
+            ]
+            call_kwargs = {
+                key: arg
+                for key, arg in kwds
+                if isinstance(arg, BaseStep._OutputArtifact)
+            }
+            return instance(*call_args, **call_kwargs)
+        else:
+            return super().__call__(*args, **kwds)
+
     def __new__(
         mcs, name: str, bases: Tuple[Type[Any], ...], dct: Dict[str, Any]
     ) -> "BaseStepMeta":

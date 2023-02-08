@@ -132,6 +132,7 @@ class BasePipeline(metaclass=BasePipelineMeta):
             is enabled for this pipeline.
     """
 
+    _ACTIVE_PIPELINE: ClassVar[Optional["BasePipeline"]] = None
     STEP_SPEC: ClassVar[Dict[str, Any]] = None  # type: ignore[assignment]
 
     INSTANCE_CONFIGURATION: Dict[str, Any] = {}
